@@ -1,54 +1,85 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { categories, projects, imagesFor, type Project } from "@/content/portfolio";
+import { categories, galleryImages, type GalleryImage } from "@/content/portfolio";
 import { cn } from "@/lib/utils";
 
-const ALL = "all";
-
 export function PortfolioBrowser() {
-  const [active, setActive] = useState<string>(ALL);
-  const [openProject, setOpenProject] = useState<Project | null>(null);
-  const [imageIndex, setImageIndex] = useState(0);
-  const reduce = useReducedMotion();
-
-  const filtered = useMemo(() => {
-    if (active === ALL) return projects;
-    return projects.filter((p) => p.category === active);
-  }, [active]);
-
   const filters = useMemo(
-    () => [{ slug: ALL, label: "All" }, ...categories.sort((a, b) => b.weight - a.weight).map((c) => ({ slug: c.slug, label: c.label }))],
+    () =>
+      [...categories]
+        .sort((a, b) => b.weight - a.weight)
+        // A category with no photos yet would open onto an empty grid.
+        .filter((c) => galleryImages.some((img) => img.category === c.slug))
+        .map((c) => ({ slug: c.slug, label: c.label })),
     [],
   );
 
-  const openLightbox = (p: Project) => {
-    setOpenProject(p);
-    setImageIndex(0);
+  const [active, setActive] = useState<string>(() => filters[0]?.slug ?? "");
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+  // Mobile only: start on a category index where the names lead, then
+  // drill into one category's grid. Desktop always shows tabs + grid.
+  const [mobileView, setMobileView] = useState<"index" | "grid">("index");
+  const topRef = useRef<HTMLDivElement>(null);
+  const reduce = useReducedMotion();
+
+  const indexEntries = useMemo(
+    () =>
+      filters.map((f) => {
+        const imgs = galleryImages.filter((img) => img.category === f.slug);
+        return { ...f, count: imgs.length, thumbs: imgs.slice(0, 4) };
+      }),
+    [filters],
+  );
+
+  const openCategory = (slug: string) => {
+    setActive(slug);
+    setMobileView("grid");
+    topRef.current?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+  };
+
+  const backToIndex = () => {
+    setMobileView("index");
+    topRef.current?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+  };
+
+  // Category straight to images — no per-project grouping shown or
+  // clicked through. `filtered` is what's on screen and what the
+  // lightbox arrows step through.
+  const filtered = useMemo(() => {
+    return galleryImages.filter((img) => img.category === active);
+  }, [active]);
+
+  const openLightbox = (index: number) => {
+    setOpenIndex(index);
     document.body.style.overflow = "hidden";
   };
 
   const closeLightbox = useCallback(() => {
-    setOpenProject(null);
+    setOpenIndex(null);
     document.body.style.overflow = "";
   }, []);
 
   const nextImage = useCallback(() => {
-    setImageIndex((i) => (openProject ? (i + 1) % openProject.imageCount : i));
-  }, [openProject]);
+    setOpenIndex((i) => (i === null ? i : (i + 1) % filtered.length));
+  }, [filtered.length]);
 
   const prevImage = useCallback(() => {
-    setImageIndex((i) =>
-      openProject ? (i - 1 + openProject.imageCount) % openProject.imageCount : i,
-    );
-  }, [openProject]);
+    setOpenIndex((i) => (i === null ? i : (i - 1 + filtered.length) % filtered.length));
+  }, [filtered.length]);
 
-  // A 24-image gallery is unusable without arrow keys, and a modal that traps
+  // Switching categories with the lightbox open would leave the index
+  // pointing at a different photo than the one on screen — close it.
+  useEffect(() => {
+    closeLightbox();
+  }, [active, closeLightbox]);
+
+  // A large gallery is unusable without arrow keys, and a modal that traps
   // scroll must always be dismissible with Escape.
   useEffect(() => {
-    if (!openProject) return;
+    if (openIndex === null) return;
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") closeLightbox();
@@ -60,17 +91,82 @@ export function PortfolioBrowser() {
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [openProject, closeLightbox, nextImage, prevImage]);
+  }, [openIndex, closeLightbox, nextImage, prevImage]);
 
   // Restore scroll if this unmounts while the lightbox is still open.
   useEffect(() => () => {
     document.body.style.overflow = "";
   }, []);
 
+  const openImage: GalleryImage | null = openIndex === null ? null : filtered[openIndex];
+
+  const activeLabel = filters.find((f) => f.slug === active)?.label ?? "";
+
   return (
     <>
-      {/* Filters */}
-      <div className="sticky top-16 md:top-20 z-20 bg-bone/90 backdrop-blur-md border-b border-line -mx-5 md:-mx-8 px-5 md:px-8 mb-12 md:mb-16">
+      <div ref={topRef} className="scroll-mt-20" />
+
+      {/* Mobile: category index */}
+      <ol className={cn("md:hidden border-t border-line", mobileView !== "index" && "hidden")}>
+        {indexEntries.map((c, i) => (
+          <li key={c.slug} className="border-b border-line">
+            <button
+              type="button"
+              onClick={() => openCategory(c.slug)}
+              className="w-full text-left py-6 flex gap-4 active:bg-paper transition-colors"
+            >
+              <span className="font-mono text-[11px] text-mute pt-1.5 w-6 shrink-0">
+                {String(i + 1).padStart(2, "0")}
+              </span>
+              <span className="flex-1 min-w-0">
+                <span className="flex items-start justify-between gap-4">
+                  <span className="font-display text-[1.65rem] leading-[1.1] tracking-tight">{c.label}</span>
+                  <svg width="18" height="12" viewBox="0 0 14 10" fill="none" aria-hidden className="mt-2.5 shrink-0 text-ink/60">
+                    <path d="M9 1L13 5L9 9M13 5H0" stroke="currentColor" strokeWidth="1.3" strokeLinecap="square" />
+                  </svg>
+                </span>
+                <span className="mt-1.5 block text-[11px] uppercase tracking-[0.18em] text-mute">
+                  {c.count} photos
+                </span>
+                <span className="mt-4 grid grid-cols-4 gap-1.5" aria-hidden>
+                  {c.thumbs.map((t) => (
+                    <span key={t.key} className="relative aspect-square overflow-hidden bg-line">
+                      <Image src={t.src} alt="" fill sizes="22vw" className="object-cover" />
+                    </span>
+                  ))}
+                </span>
+              </span>
+            </button>
+          </li>
+        ))}
+      </ol>
+
+      {/* Mobile: sticky bar while inside a category */}
+      <div
+        className={cn(
+          "md:hidden sticky top-16 z-20 bg-bone/95 backdrop-blur-md border-b border-line -mx-5 px-5 mb-8",
+          mobileView !== "grid" && "hidden",
+        )}
+      >
+        <div className="flex items-center gap-4 py-3.5">
+          <button
+            type="button"
+            onClick={backToIndex}
+            className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.16em] text-mute shrink-0"
+          >
+            <svg width="14" height="10" viewBox="0 0 14 10" fill="none" aria-hidden>
+              <path d="M5 1L1 5L5 9M1 5H14" stroke="currentColor" strokeWidth="1.3" strokeLinecap="square" />
+            </svg>
+            All
+          </button>
+          <span className="h-4 w-px bg-line" />
+          <span className="font-display text-lg leading-tight truncate">{activeLabel}</span>
+          <span className="ml-auto font-mono text-[10px] text-mute shrink-0">{filtered.length}</span>
+        </div>
+      </div>
+
+      {/* Desktop: filters */}
+      <div className="hidden md:block sticky top-16 z-20 bg-bone/90 backdrop-blur-md border-b border-line -mx-5 md:-mx-8 px-5 md:px-8 mb-12 md:mb-16">
         <div className="overflow-x-auto no-scrollbar">
           <div className="flex gap-1.5 py-4 min-w-max">
             {filters.map((f) => (
@@ -94,12 +190,15 @@ export function PortfolioBrowser() {
       {/* Grid */}
       <motion.div
         layout
-        className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5"
+        className={cn(
+          "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5",
+          mobileView === "index" && "max-md:hidden",
+        )}
       >
         <AnimatePresence mode="popLayout">
-          {filtered.map((p) => (
+          {filtered.map((img, i) => (
             <motion.button
-              key={p.slug}
+              key={img.key}
               layout
               // Architectural wipe rather than a pop — the frame stays put and
               // the image is uncovered from the bottom up.
@@ -115,25 +214,21 @@ export function PortfolioBrowser() {
                 reduce ? { opacity: 0 } : { opacity: 0, clipPath: "inset(0 0 100% 0)" }
               }
               transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-              onClick={() => openLightbox(p)}
-              aria-label={`${p.title} — ${p.categoryLabel}, ${p.imageCount} images`}
+              onClick={() => openLightbox(i)}
+              aria-label={img.title ? `${img.title} — ${img.categoryLabel}` : img.categoryLabel}
               className="group relative aspect-[4/5] overflow-hidden bg-line text-left"
             >
               <Image
-                src={p.cover}
-                alt={`${p.title} — ${p.categoryLabel}`}
+                src={img.src}
+                alt={img.title ? `${img.title} — ${img.categoryLabel}` : img.categoryLabel}
                 fill
                 sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
                 className="object-cover transition-transform duration-[1200ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.05]"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-deep/80 via-deep/0 to-transparent opacity-90 group-hover:opacity-100 transition-opacity" />
-              <div className="absolute inset-0 p-3 md:p-5 flex flex-col justify-end text-bone">
-                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.22em] text-bone/70 mb-1">
-                  {p.categoryLabel}
-                </div>
-                <div className="font-display text-base md:text-xl leading-tight">{p.title}</div>
-                <div className="mt-1 text-[10px] text-bone/60">
-                  {p.imageCount} {p.imageCount === 1 ? "image" : "images"}
+              <div className="absolute inset-0 bg-gradient-to-t from-deep/70 via-deep/0 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="absolute inset-0 p-3 md:p-5 flex flex-col justify-end text-bone opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.22em] text-bone/80">
+                  {img.categoryLabel}
                 </div>
               </div>
             </motion.button>
@@ -143,7 +238,7 @@ export function PortfolioBrowser() {
 
       {/* Lightbox */}
       <AnimatePresence>
-        {openProject && (
+        {openImage && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -153,11 +248,8 @@ export function PortfolioBrowser() {
             onClick={closeLightbox}
           >
             <div className="flex items-center justify-between p-5 md:p-7 text-bone" onClick={(e) => e.stopPropagation()}>
-              <div>
-                <div className="text-[10px] uppercase tracking-[0.22em] text-bone/60">
-                  {openProject.categoryLabel}
-                </div>
-                <div className="font-display text-xl md:text-2xl">{openProject.title}</div>
+              <div className="text-[10px] uppercase tracking-[0.22em] text-bone/60">
+                {openImage.categoryLabel}
               </div>
               <button
                 onClick={closeLightbox}
@@ -174,15 +266,15 @@ export function PortfolioBrowser() {
               onClick={(e) => e.stopPropagation()}
             >
               <motion.div
-                key={imageIndex}
+                key={openIndex}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.35 }}
                 className="relative w-full h-full max-h-[78vh]"
               >
                 <Image
-                  src={imagesFor(openProject)[imageIndex]}
-                  alt={`${openProject.title} ${imageIndex + 1}`}
+                  src={openImage.src}
+                  alt={`${openImage.title ? `${openImage.title} — ` : ""}${openImage.categoryLabel} — image ${(openIndex ?? 0) + 1} of ${filtered.length}`}
                   fill
                   className="object-contain"
                   sizes="100vw"
@@ -190,7 +282,7 @@ export function PortfolioBrowser() {
                 />
               </motion.div>
 
-              {openProject.imageCount > 1 && (
+              {filtered.length > 1 && (
                 <>
                   <button
                     onClick={prevImage}
@@ -215,9 +307,9 @@ export function PortfolioBrowser() {
             </div>
             <div className="p-5 md:p-7 text-center text-xs text-bone/60" onClick={(e) => e.stopPropagation()}>
               <span className="tabular-nums">
-                {imageIndex + 1} / {openProject.imageCount}
+                {(openIndex ?? 0) + 1} / {filtered.length}
               </span>
-              {openProject.imageCount > 1 && (
+              {filtered.length > 1 && (
                 <span className="ml-3 hidden md:inline text-bone/40">
                   Use ← → to browse · Esc to close
                 </span>

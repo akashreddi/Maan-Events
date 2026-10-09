@@ -1,0 +1,269 @@
+import Image from "next/image";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { categoryBySlug, eventCategories, type EventCategory } from "@/content/event-categories";
+import { faqForCategory } from "@/content/faqs";
+import { projects } from "@/content/portfolio";
+import { Container } from "@/components/ui/Container";
+import { Reveal, Stagger, StaggerItem } from "@/components/motion/Reveal";
+import { CTA } from "@/components/sections/CTA";
+import { FAQ } from "@/components/sections/FAQ";
+import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
+
+const SHOWCASE_SIZE = 6;
+
+type ShowcaseTile = {
+  key: string;
+  src: string;
+  /** Absent for hand-picked images, which have no project behind them. */
+  categoryLabel?: string;
+  title?: string;
+};
+
+/**
+ * The gallery, in order of preference: the service's own hand-picked
+ * images, then projects from the categories it actually works in, then
+ * anything named. Projects still awaiting an event name sort last so a
+ * service page never leads with a row of placeholders.
+ */
+function showcaseFor(service: EventCategory): ShowcaseTile[] {
+  if (service.gallery?.length) {
+    return service.gallery.slice(0, SHOWCASE_SIZE).map((src) => ({
+      key: src,
+      src,
+    }));
+  }
+
+  const cats = service.portfolioCategories ?? [];
+  const rank = (p: (typeof projects)[number]) => {
+    const i = cats.indexOf(p.category);
+    return (i === -1 ? cats.length : i) * 2 + (p.nameConfirmed ? 0 : 1);
+  };
+
+  return [...projects]
+    .sort((a, b) => rank(a) - rank(b))
+    .slice(0, SHOWCASE_SIZE)
+    .map((p) => ({
+      // Not p.slug — several projects share the slug "main" across folders.
+      key: p.cover,
+      src: p.cover,
+      categoryLabel: p.categoryLabel,
+      title: p.nameConfirmed ? p.title : undefined,
+    }));
+}
+
+/** One portfolio category — /portfolio/<slug>/. */
+export function CategoryPageTemplate({ slug }: { slug: string }) {
+  const service = categoryBySlug(slug);
+  if (!service) notFound();
+
+  const related = eventCategories.filter((s) => s.slug !== slug).slice(0, 4);
+  const showcase = showcaseFor(service);
+  const faq = faqForCategory(slug);
+
+  return (
+    <>
+      <BreadcrumbJsonLd
+        crumbs={[
+          { name: "Home", url: "/" },
+          { name: "Portfolio", url: "/portfolio/" },
+          { name: service.shortTitle, url: service.url },
+        ]}
+      />
+      {/* HERO */}
+      <section className="relative -mt-16 md:-mt-20 bg-deep text-bone overflow-hidden">
+        <div className="absolute inset-0">
+          <Image
+            src={service.cover}
+            alt={service.title}
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-deep/70 via-deep/40 to-deep/95" />
+        </div>
+        <Container className="relative pt-40 pb-20 md:pt-56 md:pb-28">
+          <Reveal>
+            <div className="text-[10px] uppercase tracking-[0.22em] text-bone/70 mb-5 flex items-center gap-3">
+              <span className="h-px w-8 bg-bone/60" />
+              <Link href="/portfolio/" className="hover:text-bone">Portfolio</Link>
+              <span className="text-bone/40">/</span>
+              <span>{service.shortTitle}</span>
+            </div>
+          </Reveal>
+          <Reveal delay={0.1}>
+            <h1 className="font-display text-5xl md:text-7xl lg:text-8xl leading-[0.95] max-w-5xl">
+              {service.title}
+            </h1>
+          </Reveal>
+          <Reveal delay={0.2}>
+            <p className="mt-8 max-w-2xl text-lg leading-relaxed text-bone/80">
+              {service.tagline}
+            </p>
+          </Reveal>
+        </Container>
+      </section>
+
+      {/* OVERVIEW + CAPABILITIES */}
+      <section className="bg-bone">
+        <Container className="section-y">
+          <div className="grid md:grid-cols-12 gap-12 lg:gap-16">
+            <Reveal className="md:col-span-5">
+              <div className="text-xs uppercase tracking-[0.18em] text-mute mb-5 flex items-center gap-3">
+                <span className="h-px w-8 bg-mute" />
+                <span>The Category</span>
+              </div>
+              <h2 className="text-3xl md:text-4xl lg:text-5xl">
+                Built in-house.<br />
+                <span className="italic font-light text-mute">Delivered on time.</span>
+              </h2>
+            </Reveal>
+            <div className="md:col-span-7">
+              <Reveal>
+                <p className="text-lg leading-relaxed text-ink/90">{service.description}</p>
+              </Reveal>
+              <Stagger className="mt-10 grid sm:grid-cols-2 gap-x-8 gap-y-6">
+                {service.capabilities.map((c) => (
+                  <StaggerItem key={c}>
+                    <div className="flex items-start gap-4 border-t border-line pt-4">
+                      <span className="font-display text-mute mt-0.5">—</span>
+                      <span className="text-base leading-relaxed">{c}</span>
+                    </div>
+                  </StaggerItem>
+                ))}
+              </Stagger>
+            </div>
+          </div>
+        </Container>
+      </section>
+
+      {/* PROJECT SHOWCASE */}
+      <section className="bg-deep text-bone">
+        <Container className="section-y">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12 md:mb-16">
+            <Reveal>
+              <div className="text-xs uppercase tracking-[0.18em] text-mute-dark mb-5 flex items-center gap-3">
+                <span className="h-px w-8 bg-mute-dark" />
+                <span>In the Field</span>
+              </div>
+              <h2 className="text-4xl md:text-5xl lg:text-6xl">Selected deployments</h2>
+            </Reveal>
+            <Reveal>
+              <Link
+                href="/portfolio/"
+                className="group inline-flex items-center gap-3 text-sm uppercase tracking-wider border-b border-bone pb-1 self-start"
+              >
+                See full portfolio
+                <Arrow />
+              </Link>
+            </Reveal>
+          </div>
+          <Stagger className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+            {showcase.map((tile) => (
+              <StaggerItem key={tile.key}>
+                <Link href="/portfolio/" className="group block relative aspect-[4/5] overflow-hidden">
+                  <Image
+                    src={tile.src}
+                    alt={
+                      tile.title
+                        ? `${tile.title} — ${tile.categoryLabel}`
+                        : (tile.categoryLabel ?? service.title)
+                    }
+                    fill
+                    sizes="(min-width: 768px) 33vw, 50vw"
+                    className="object-cover transition-transform duration-[1200ms] group-hover:scale-[1.05]"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-deep/95 via-deep/40 to-transparent" />
+                  {/* A tile with no confirmed event name carries no caption
+                      at all — better a clean frame than a "TBD" label. */}
+                  {tile.categoryLabel && (
+                    <div className="absolute inset-0 p-5 flex flex-col justify-end">
+                      <div className="text-[10px] uppercase tracking-[0.22em] text-bone/70 mb-1">
+                        {tile.categoryLabel}
+                      </div>
+                    </div>
+                  )}
+                </Link>
+              </StaggerItem>
+            ))}
+          </Stagger>
+        </Container>
+      </section>
+
+      {/* RELATED SERVICES */}
+      <section className="bg-bone">
+        <Container className="section-y">
+          <Reveal>
+            <div className="text-xs uppercase tracking-[0.18em] text-mute mb-5 flex items-center gap-3">
+              <span className="h-px w-8 bg-mute" />
+              <span>More of our work</span>
+            </div>
+            <h2 className="text-3xl md:text-4xl lg:text-5xl mb-12">
+              Other event categories.
+            </h2>
+          </Reveal>
+          <Stagger className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {related.map((r) => (
+              <StaggerItem key={r.slug}>
+                <Link href={r.url} className="group block relative aspect-[3/4] overflow-hidden">
+                  <Image
+                    src={r.cover}
+                    alt={r.title}
+                    fill
+                    sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+                    className="object-cover transition-transform duration-[1200ms] group-hover:scale-[1.05]"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-deep/95 via-deep/45 to-transparent" />
+                  <div className="absolute inset-0 p-5 flex flex-col justify-end text-bone">
+                    <div className="font-display text-xl leading-tight">{r.shortTitle}</div>
+                    <div className="mt-3 inline-flex items-center gap-2 text-[10px] uppercase tracking-wider opacity-80 group-hover:opacity-100">
+                      Explore <Arrow />
+                    </div>
+                  </div>
+                </Link>
+              </StaggerItem>
+            ))}
+          </Stagger>
+        </Container>
+      </section>
+
+      {faq && <FAQ faqs={[faq]} heading="Frequently asked" />}
+
+      <CTA />
+    </>
+  );
+}
+
+function Arrow() {
+  return (
+    <svg width="14" height="10" viewBox="0 0 14 10" fill="none" aria-hidden className="transition-transform duration-300 group-hover:translate-x-1">
+      <path d="M9 1L13 5L9 9M13 5H0" stroke="currentColor" strokeWidth="1.4" strokeLinecap="square" />
+    </svg>
+  );
+}
+
+export function categoryMetadata(slug: string) {
+  const s = categoryBySlug(slug);
+  if (!s) return {};
+  const description = `${s.tagline} ${s.description}`;
+  return {
+    title: s.title,
+    description,
+    keywords: s.keywords,
+    alternates: { canonical: s.url },
+    openGraph: {
+      title: `${s.title} · Maan Events`,
+      description: s.tagline,
+      type: "website" as const,
+      url: s.url,
+      images: [{ url: s.cover, alt: s.title }],
+    },
+    twitter: {
+      card: "summary_large_image" as const,
+      title: `${s.title} · Maan Events`,
+      description: s.tagline,
+      images: [s.cover],
+    },
+  };
+}

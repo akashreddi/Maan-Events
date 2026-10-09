@@ -1,21 +1,23 @@
-import Image from "next/image";
-import Link from "next/link";
 import type { Metadata } from "next";
 import { Container } from "@/components/ui/Container";
 import { Reveal, Stagger, StaggerItem } from "@/components/motion/Reveal";
 import { CTA } from "@/components/sections/CTA";
-import { services } from "@/content/services";
+import { infraDisciplines } from "@/content/infrastructure";
+import { InfraCard } from "@/components/templates/InfraServiceTemplate";
+import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 
 export const metadata: Metadata = {
-  title: "Services — Twelve Disciplines Under One Roof",
+  title: "Services — Infrastructure As A Service",
   description:
-    "From engineered superstructures to red-carpet finishing — Maan Events delivers twelve event infrastructure disciplines, all in-house.",
+    "German hangars, megastructures, staging, barricading, air conditioning, decor and more — thirteen event infrastructure services, owned, stocked and installed in-house by Maan.",
   alternates: { canonical: "/services/" },
 };
 
 export default function ServicesPage() {
   return (
     <>
+      <BreadcrumbJsonLd crumbs={[{ name: "Home", url: "/" }, { name: "Services", url: "/services/" }]} />
+
       <section className="bg-deep text-bone -mt-16 md:-mt-20">
         <Container className="pt-36 md:pt-52 pb-16 md:pb-24">
           <Reveal>
@@ -26,14 +28,16 @@ export default function ServicesPage() {
           </Reveal>
           <Reveal delay={0.1}>
             <h1 className="font-display text-5xl md:text-7xl lg:text-[7.5rem] leading-[0.95] max-w-5xl">
-              Twelve disciplines.<br />
-              <span className="italic font-light text-bone/80">One in-house team.</span>
+              Infrastructure
+              <br />
+              <span className="italic font-light text-bone/80">as a service.</span>
             </h1>
           </Reveal>
           <Reveal delay={0.2}>
             <p className="mt-8 max-w-2xl text-lg leading-relaxed text-bone/80">
-              Every layer of an event — structure, climate, floor, decor, safety — designed,
-              fabricated and installed by Maan Events directly. No vendor chains.
+              {infraDisciplines.length} infrastructure services, from hangars and megastructures to
+              climate control, staging and decor. Every piece is owned, stocked and installed by our
+              own team, with no outsourcing.
             </p>
           </Reveal>
         </Container>
@@ -41,38 +45,21 @@ export default function ServicesPage() {
 
       <section className="bg-bone">
         <Container className="section-y">
-          <Stagger className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-            {services.map((s) => (
-              <StaggerItem key={s.slug}>
-                <Link
-                  href={s.url}
-                  className="group block relative overflow-hidden bg-paper border border-line"
-                >
-                  <div className="relative aspect-[4/5] overflow-hidden">
-                    <Image
-                      src={s.cover}
-                      alt={s.title}
-                      fill
-                      sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
-                      className="object-cover transition-transform duration-[1200ms] group-hover:scale-[1.04]"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-deep/85 via-deep/20 to-transparent" />
-                    <div className="absolute inset-0 p-7 flex flex-col justify-end text-bone">
-                      <div className="text-[10px] uppercase tracking-[0.22em] text-bone/70 mb-2">
-                        {s.tagline}
-                      </div>
-                      <h2 className="font-display text-2xl md:text-3xl leading-tight">
-                        {s.title}
-                      </h2>
-                      <div className="mt-4 flex items-center gap-2 text-xs uppercase tracking-wider text-bone/80 group-hover:text-bone">
-                        Explore
-                        <svg width="14" height="10" viewBox="0 0 14 10" fill="none" aria-hidden className="transition-transform duration-300 group-hover:translate-x-1">
-                          <path d="M9 1L13 5L9 9M13 5H0" stroke="currentColor" strokeWidth="1.4" strokeLinecap="square" />
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
+          <Reveal>
+            <div className="text-xs uppercase tracking-[0.18em] text-mute mb-5 flex items-center gap-3">
+              <span className="h-px w-8 bg-mute" />
+              <span>Infrastructure As A Service</span>
+            </div>
+            <h2 className="text-3xl md:text-4xl lg:text-5xl max-w-3xl mb-12 md:mb-16">
+              Choose a service
+              <br />
+              <span className="italic font-light text-mute">to see what we deploy.</span>
+            </h2>
+          </Reveal>
+          <Stagger className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-7" gap={0.05}>
+            {infraDisciplines.map((d, i) => (
+              <StaggerItem key={d.slug}>
+                <InfraCard service={d} index={i} />
               </StaggerItem>
             ))}
           </Stagger>

@@ -4,7 +4,18 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import { services, featuredServices } from "@/content/services";
+import { infraDisciplines } from "@/content/infrastructure";
+
+// The homepage "capabilities" are the infrastructure services — what the
+// client actually supplies. Event types live in the portfolio section
+// below, so the two no longer repeat each other.
+const services = infraDisciplines.map((d) => ({
+  slug: d.slug,
+  url: d.url,
+  title: d.label,
+  tagline: d.tagline,
+  cover: d.cover,
+}));
 import { Reveal } from "@/components/motion/Reveal";
 
 export function ServicesPreview() {
@@ -28,13 +39,13 @@ function Heading() {
         <Reveal>
           <div className="text-[10px] md:text-xs uppercase tracking-[0.22em] text-mute mb-4 flex items-center gap-3">
             <span className="h-px w-8 bg-mute" />
-            <span>Capabilities — 12 in-house disciplines</span>
+            <span>Infrastructure As A Service — {services.length} in-house services</span>
           </div>
         </Reveal>
         <Reveal delay={0.05}>
           <h2 className="text-4xl md:text-5xl lg:text-6xl">
-            Twelve disciplines.<br />
-            <span className="italic font-light text-mute">One in-house team.</span>
+            Everything an event stands on.<br />
+            <span className="italic font-light text-mute">Owned and built in-house.</span>
           </h2>
         </Reveal>
       </div>
@@ -73,7 +84,15 @@ function DesktopIndex() {
               >
                 <span
                   className={`font-mono text-[10px] w-7 shrink-0 transition-colors duration-300 ${
-                    isActive ? "text-accent" : "text-mute"
+                    isActive
+                      ? // Gradient text needs background-clip:text + a
+                        // transparent fill color, so this can't reuse the
+                        // plain `text-accent` utility the inactive state
+                        // uses. Stops are the burnt end of the accent-yellow
+                        // ramp rather than --color-accent, which sits at
+                        // only ~2.4:1 at this size on an ivory ground.
+                        "bg-[linear-gradient(180deg,#B37F00_0%,#6B4A00_100%)] bg-clip-text text-transparent"
+                      : "text-mute"
                   }`}
                 >
                   {String(i + 1).padStart(2, "0")}
@@ -92,7 +111,13 @@ function DesktopIndex() {
                 <motion.span
                   animate={{ opacity: isActive ? 1 : 0, x: isActive ? 0 : -8 }}
                   transition={{ duration: 0.3 }}
-                  className="inline-flex items-center text-accent"
+                  // Solid midpoint of the gradient, not text-accent. The
+                  // arrow SVG below reads stroke="currentColor", which
+                  // resolves from this span's `color`. If this became
+                  // gradient text (text-transparent), the SVG would
+                  // inherit transparent too and disappear — currentColor
+                  // only carries a single resolved color, not a gradient.
+                  className="inline-flex items-center text-[#8C6800]"
                   aria-hidden
                 >
                   <Arrow />
@@ -158,7 +183,7 @@ function DesktopIndex() {
 /* ----------------------------- MOBILE --------------------------------- */
 
 function MobileShowcase() {
-  const items = featuredServices.length >= 4 ? featuredServices : services.slice(0, 6);
+  const items = services;
   const [idx, setIdx] = useState(0);
   const [paused, setPaused] = useState(false);
 
@@ -270,7 +295,7 @@ function MobileShowcase() {
           href="/services/"
           className="group flex items-center justify-between gap-2 bg-deep text-bone px-5 py-4 text-[11px] uppercase tracking-[0.18em]"
         >
-          All 12 <Arrow />
+          All 10 <Arrow />
         </Link>
         <Link
           href="/portfolio/"

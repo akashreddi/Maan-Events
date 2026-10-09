@@ -7,9 +7,12 @@ import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion
 import { MaskReveal } from "@/components/motion/Reveal";
 
 // Maan Events builds for competing political parties, so the hero must stay
-// party-neutral: no politicians, no party insignia, and no dominant party
-// colour (yellow in particular). Structure-only shots are the safe choice.
-const HERO_IMAGE = "/portfolio/exhibitions/hitex-event/01.jpg";
+// party-neutral in its IMAGERY: no politicians, no party insignia, no
+// banners naming a party. Structure-only shots are the safe choice. The
+// red/yellow brand palette itself is used deliberately across the whole
+// site, hero included, per client direction — neutrality is enforced by
+// keeping the photography structure-only, not by avoiding the brand colours.
+const HERO_IMAGE = "/portfolio/movie-releases/main/movie-release-aerial.png";
 
 export function Hero() {
   const ref = useRef<HTMLElement>(null);
@@ -45,12 +48,12 @@ export function Hero() {
             className="object-cover"
           />
         </motion.div>
-        <div className="absolute inset-0 bg-gradient-to-b from-deep/70 via-deep/40 to-deep/85" />
-        <div className="absolute inset-0 bg-gradient-to-r from-deep/60 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-b from-deep/75 via-deep/55 to-deep/90 md:via-deep/40 md:to-deep/85" />
+        <div className="absolute inset-0 bg-gradient-to-r from-deep/70 via-deep/25 to-transparent md:from-deep/60 md:via-transparent" />
       </div>
 
       {/* Content */}
-      <div className="relative container-x flex min-h-[100svh] flex-col justify-end pb-20 pt-32 md:pb-28 md:pt-40 lg:min-h-[110svh]">
+      <div className="relative container-x flex min-h-[65svh] lg:min-h-[70svh] flex-col justify-end pb-14 pt-24 md:pb-18 md:pt-32">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -64,7 +67,7 @@ export function Hero() {
             animate={{ scaleX: 1 }}
             transition={{ duration: 0.9, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
           />
-          <span>Established 1983 · Maan Events</span>
+          <span>Established 2007 · Maan Events</span>
         </motion.div>
 
         <h1 className="font-display text-5xl leading-[0.95] sm:text-6xl md:text-7xl lg:text-[8.5vw] xl:text-[7.5rem] max-w-[18ch]">
@@ -87,7 +90,7 @@ export function Hero() {
           transition={{ duration: 0.8, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
           className="mt-8 max-w-xl text-base leading-relaxed text-bone/80 md:text-lg"
         >
-          Four decades building the stages, structures and pavilions behind India&apos;s
+          Two decades building the stages, structures and pavilions behind India&apos;s
           largest government, corporate and public events.
         </motion.p>
 
@@ -99,14 +102,14 @@ export function Hero() {
         >
           <Link
             href="/portfolio/"
-            className="group inline-flex items-center gap-3 bg-bone text-ink px-7 py-4 text-sm uppercase tracking-wider hover:bg-accent hover:text-bone transition-colors duration-300"
+            className="group inline-flex items-center gap-3 bg-[linear-gradient(180deg,#FFCF3D_0%,#F5B400_100%)] text-ink px-7 py-4 text-sm uppercase tracking-wider hover:bg-[linear-gradient(180deg,#F5B400_0%,#D69A00_100%)] transition-all duration-300 shadow-md"
           >
             View Portfolio
             <ArrowRight />
           </Link>
           <Link
             href="/services/"
-            className="group inline-flex items-center gap-3 border border-bone/30 px-7 py-4 text-sm uppercase tracking-wider hover:border-bone transition-colors duration-300"
+            className="group inline-flex items-center gap-3 border border-bone/30 bg-bone/5 hover:bg-[linear-gradient(135deg,rgba(247,241,230,0.12)_0%,rgba(245,180,0,0.22)_100%)] px-7 py-4 text-sm uppercase tracking-wider hover:border-bone transition-all duration-300"
           >
             Our Capabilities
             <ArrowRight />

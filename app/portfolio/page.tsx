@@ -3,6 +3,9 @@ import { Container } from "@/components/ui/Container";
 import { Reveal } from "@/components/motion/Reveal";
 import { PortfolioBrowser } from "@/components/portfolio/PortfolioBrowser";
 import { CTA } from "@/components/sections/CTA";
+import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
+import { FAQ } from "@/components/sections/FAQ";
+import { faqs } from "@/content/faqs";
 
 export const metadata: Metadata = {
   title: "Portfolio — Selected Work Across Government, Corporate & Public Events",
@@ -14,6 +17,7 @@ export const metadata: Metadata = {
 export default function PortfolioPage() {
   return (
     <>
+      <BreadcrumbJsonLd crumbs={[{ name: "Home", url: "/" }, { name: "Portfolio", url: "/portfolio/" }]} />
       <section className="bg-deep text-bone -mt-16 md:-mt-20">
         <Container className="pt-36 md:pt-52 pb-16 md:pb-24">
           <Reveal>
@@ -30,8 +34,8 @@ export default function PortfolioPage() {
           </Reveal>
           <Reveal delay={0.2}>
             <p className="mt-8 max-w-2xl text-lg leading-relaxed text-bone/80">
-              Tap any project to step inside. Filter by audience and scale —
-              from heads of state to brand launches.
+              Browse by event type, from heads of state and national ceremonies to
+              weddings, concerts and brand launches.
             </p>
           </Reveal>
         </Container>
@@ -42,6 +46,8 @@ export default function PortfolioPage() {
           <PortfolioBrowser />
         </Container>
       </section>
+
+      <FAQ faqs={faqs} heading="The best event company for every category we serve." />
 
       <CTA />
     </>

@@ -2,15 +2,15 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import { useState } from "react";
-import { clientLogos } from "@/content/testimonials";
+import { marqueeClients } from "@/content/clients";
 
 export function ClientMarquee() {
-  const row = [...clientLogos, ...clientLogos];
+  const row = [...marqueeClients, ...marqueeClients];
   const reduce = useReducedMotion();
   const [paused, setPaused] = useState(false);
 
   return (
-    <section className="bg-bone border-y border-line">
+    <section className="bg-sand border-y border-line">
       <div className="container-x py-10 md:py-14">
         <div className="text-xs uppercase tracking-[0.22em] text-mute mb-8 text-center">
           Trusted by

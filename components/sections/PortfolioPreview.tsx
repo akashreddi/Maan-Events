@@ -7,6 +7,10 @@ import { AnimatePresence, motion } from "framer-motion";
 import { categories, projectsByCategory, featuredProjects } from "@/content/portfolio";
 import { Reveal } from "@/components/motion/Reveal";
 
+const POPULATED_CATEGORIES = categories.filter(
+  (c) => projectsByCategory(c.slug).length > 0,
+).length;
+
 export function PortfolioPreview() {
   return (
     <section className="bg-deep text-bone">
@@ -26,7 +30,7 @@ function Heading() {
         <Reveal>
           <div className="text-[10px] md:text-xs uppercase tracking-[0.22em] text-mute-dark mb-4 flex items-center gap-3">
             <span className="h-px w-8 bg-mute-dark" />
-            <span>Selected Work — 9 Categories</span>
+            <span>Selected Work — {POPULATED_CATEGORIES} Event Categories</span>
           </div>
         </Reveal>
         <Reveal delay={0.05}>
@@ -65,12 +69,16 @@ function useCategoryEntries(): CatEntry[] {
       .sort((a, b) => b.weight - a.weight)
       .map((c) => {
         const ps = projectsByCategory(c.slug);
+        // Represent each category with a project that has a confirmed
+        // event name where one exists, so the landing page doesn't lead
+        // with a "TBD" placeholder. The portfolio page still shows them.
+        const lead = ps.find((p) => p.nameConfirmed) ?? ps[0];
         return {
           slug: c.slug,
           label: c.label,
           count: ps.length,
-          cover: ps[0]?.cover ?? "",
-          featuredProjectTitle: ps[0]?.title ?? "",
+          cover: lead?.cover ?? "",
+          featuredProjectTitle: lead?.nameConfirmed ? lead.title : "",
         };
       })
       .filter((c) => c.cover);
@@ -93,7 +101,7 @@ function DesktopIndex() {
           return (
             <li key={c.slug} className="border-b border-line-dark">
               <Link
-                href="/portfolio/"
+                href={`/portfolio/${c.slug}/`}
                 onMouseEnter={() => setActive(i)}
                 onFocus={() => setActive(i)}
                 className="group flex items-center gap-6 py-[18px] xl:py-[22px]"
@@ -168,11 +176,8 @@ function DesktopIndex() {
                 exit={{ opacity: 0, y: -4 }}
                 transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
               >
-                <div className="text-[10px] uppercase tracking-[0.22em] text-bone/75 mb-2">
-                  {current.label}
-                </div>
                 <div className="font-display text-2xl xl:text-3xl leading-tight">
-                  {current.featuredProjectTitle}
+                  {current.label}
                 </div>
               </motion.div>
             </AnimatePresence>
@@ -226,7 +231,11 @@ function MobileShowcase() {
           >
             <Image
               src={current.cover}
-              alt={`${current.categoryLabel} — ${current.title}`}
+              alt={
+                current.nameConfirmed
+                  ? `${current.categoryLabel} — ${current.title}`
+                  : current.categoryLabel
+              }
               fill
               priority={idx === 0}
               sizes="100vw"
@@ -255,17 +264,14 @@ function MobileShowcase() {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
             >
-              <div className="text-[10px] uppercase tracking-[0.22em] text-bone/70 mb-2">
-                {current.categoryLabel}
-              </div>
               <h3 className="font-display text-3xl md:text-4xl leading-[1.05] mb-6 max-w-[14ch]">
-                {current.title}
+                {current.categoryLabel}
               </h3>
               <Link
-                href="/portfolio/"
+                href={`/portfolio/${current.category}/`}
                 className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] border-b border-bone pb-1"
               >
-                Open Project <Arrow />
+                View Category <Arrow />
               </Link>
             </motion.div>
           </AnimatePresence>

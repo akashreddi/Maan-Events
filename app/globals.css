@@ -1,89 +1,299 @@
 @import "tailwindcss";
 
+/* =====================================================
+   OBSIDIAN, MARIGOLD & SIGNAL RED
+   Warm near-black grounds · Vibrant yellow accent · Vivid red accent
+
+   This @theme block is the single source of truth for colour.
+   Everything downstream — Tailwind's generated utilities, the
+   hand-written token helpers, and the gradient classes — reads
+   from these tokens. Do not add a second :root palette underneath
+   it: a later :root silently overrides every value here, which is
+   how this file previously ended up carrying three competing
+   schemes at once.
+   ===================================================== */
 @theme {
-  /* Text colour. Softened off pure black — the old #0B0B0F read as harsh at
-     full-bleed. Still 15.7:1 on bone, so body copy loses nothing. */
-  --color-ink: #16191C;
+  /* GROUNDS — dark. `deep` is the inverted-section ground — a vibrant
+     deep red, not neutral black, so every inverted section (hero, nav,
+     footer, CTA) carries the brand's red instead of reading as generic
+     dark chrome. `ink` stays near-black — it is text on LIGHT sections
+     and small hard edges, not a section ground, so it doesn't need to
+     carry colour. */
+  --color-ink: #14100C;
+  --color-deep: #43101A;
+  --color-deep-raised: #5C1826;
 
-  /* Dark surfaces. Petrol teal rather than black: it sits opposite the red and
-     amber of the logo on the colour wheel, so the mark and the accent lift off
-     it. Also politically inert here — no AP/TS party runs teal, unlike yellow
-     (TDP), saffron (BJP), green (AIMIM), pink (BRS) or bright blue (YSRCP). */
-  --color-deep: #123A44;
-  --color-deep-raised: #17464F;
+  /* GROUNDS — light. `bone` is the page ground, `paper` the raised
+     panel, `sand` the tinted band (marquee, testimonials). */
+  --color-bone: #F7F1E6;
+  --color-paper: #EDE3D3;
+  --color-sand: #DFD2BC;
 
-  --color-bone: #F5F1EA;
-  --color-paper: #FFFFFF;
-  --color-mute: #6B6B72;
-  /* Lightened from #9A9A9F, which only reached 4.37:1 on `deep`. */
-  --color-mute-dark: #A0A0A6;
-  --color-line: #E5E0D6;
-  --color-line-dark: #1F3A42;
-  --color-accent: #C8221C;
-  --color-accent-hover: #A91812;
-  --color-accent-tint: #F7E9E7;
+  /* SECONDARY TEXT
+     --color-mute      → secondary text on LIGHT grounds (dark value)
+     --color-mute-dark → secondary text on DARK grounds (light value)
+     These two must stay on opposite ends of the scale. They were
+     previously set to the same dark green, which is why secondary
+     copy vanished on every inverted section. */
+  --color-mute: #6B6055;
+  --color-mute-dark: #C4B49C;
+  /* Bone at reduced opacity, for secondary text that sits over the
+     dark gradient and must stay legible at every stop. */
+  --color-mute-legible: color-mix(in srgb, #F7F1E6 72%, transparent);
 
-  /* The brand red only reaches 2.2:1 on `deep` (and was already failing at
-     3.5:1 on the old black), so dark sections use this lighter tint of it
-     instead — 4.8:1, clears AA for body text. */
-  --color-accent-light: #EF8378;
+  /* LINES */
+  --color-line: #DCCFB8;      /* dividers on light grounds */
+  --color-line-dark: #4A3D2E; /* dividers on dark grounds */
 
-  /* Surface steps: `bone` is the page, `sand` lifts a card off it, `paper` is
-     brightest. `deep-raised` does the same job on dark sections. */
-  --color-sand: #EDE7DB;
+  /* PRIMARY ACTION — VIBRANT YELLOW
+     Carries every primary CTA. Always pairs with --color-ink for
+     text, never bone: yellow is a light accent and needs a dark
+     label. */
+  --color-accent: #F5B400;
+  --color-accent-hover: #D69A00;
+  --color-accent-tint: #FFF3D6;
+  --color-accent-light: #FFCF3D;
 
-  /* Bronze, not yellow — hue ~35deg at half saturation. Keep it to hairlines,
-     small marks and dark backgrounds, where it reads metallic. Large flat
-     fills on `bone` warm toward yellow, which this site deliberately avoids:
-     Maan Events builds for competing parties and yellow belongs to one.
-     `gold` is the on-light variant, darkened from #B8893E so a hairline is
-     actually visible against bone (2.8:1 -> 3.9:1); `gold-soft` is for dark. */
-  --color-gold: #9C712E;
-  --color-gold-soft: #D7B77E;
+  /* SECONDARY ACTION — SIGNAL RED
+     The contrast partner to accent yellow — used for emphasis
+     bands, secondary CTAs and highlight moments. Pairs with
+     --color-bone for text, never ink. */
+  --color-red: #D6293B;
+  --color-red-hover: #B01E2E;
+  --color-red-tint: #FBE3E5;
 
-  --font-sans: var(--font-inter), system-ui, sans-serif;
-  --font-display: var(--font-fraunces), Georgia, serif;
+  /* SUPPORTING WARM GOLD — eyebrows, rules, italic subheads */
+  --color-gold: #E0A415;
+  --color-gold-soft: #F5CD5C;
 
-  --ease-premium: cubic-bezier(0.22, 1, 0.36, 1);
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Fraunces', Georgia, serif;
+  --ease-premium: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* =====================================================
+   GRADIENT BACKGROUNDS
+
+   These are unlayered rules, so they intentionally win over the
+   Tailwind-generated .bg-* utilities of the same name. Every dark
+   ground below stays within the deep-red range (#3A0E16–#5C1826)
+   so that ivory text holds well past 4.5:1 at EVERY stop — the
+   previous mint gradient put bone text at roughly 1.7:1.
+   ===================================================== */
+
+/* PAGE GROUND — warm ivory */
+.bg-default {
+  background: #F7F1E6;
+}
+
+/* =====================================================
+   PRIMARY DARK GROUND — VIBRANT RED
+   Used by every inverted section, the portfolio header and the
+   lightbox. A shallow vertical lift keeps the red from reading as
+   a flat slab without ever getting light enough to threaten the
+   text on top of it.
+   ===================================================== */
+.bg-deep {
+  background: linear-gradient(
+    180deg,
+    #3A0E16 0%,
+    #5C1826 50%,
+    #3A0E16 100%
+  );
+}
+
+/* =====================================================
+   RAISED RED
+   Panels and controls sitting ON a .bg-deep ground — one step
+   lighter so the edge reads without a border.
+   ===================================================== */
+.bg-deep-raised {
+  background: linear-gradient(
+    180deg,
+    #5C1826 0%,
+    #742035 50%,
+    #5C1826 100%
+  );
+}
+
+/* =====================================================
+   VIBRANT YELLOW — PRIMARY ACTION
+   Pair with --color-ink text, never bone.
+   ===================================================== */
+.bg-accent {
+  background: linear-gradient(
+    135deg,
+    #FFCF3D 0%,
+    #F5B400 45%,
+    #D69A00 100%
+  );
+}
+
+.bg-accent-hover {
+  background: linear-gradient(
+    135deg,
+    #F5B400 0%,
+    #D69A00 55%,
+    #B37F00 100%
+  );
+}
+
+/* SOFT YELLOW WASH (quote panel inside testimonials) */
+.bg-accent-tint {
+  background: linear-gradient(
+    135deg,
+    #FFF8E6 0%,
+    #FFF3D6 100%
+  );
+}
+
+/* =====================================================
+   SIGNAL RED — SECONDARY ACTION
+   Pair with --color-bone text, never ink.
+   ===================================================== */
+.bg-red {
+  background: linear-gradient(
+    135deg,
+    #E4485A 0%,
+    #D6293B 45%,
+    #B01E2E 100%
+  );
+}
+
+.bg-red-hover {
+  background: linear-gradient(
+    135deg,
+    #D6293B 0%,
+    #B01E2E 55%,
+    #8C1622 100%
+  );
+}
+
+/* =====================================================
+   IVORY → WARM SAND
+   Light raised panel.
+   ===================================================== */
+.bg-paper {
+  background: linear-gradient(
+    190deg,
+    #F7F1E6 0%,
+    #EDE3D3 50%,
+    #F7F1E6 100%
+  );
+}
+
+/* =====================================================
+   TRUSTED BY & THEIR WORDS
+   Warm ivory → deeper sand.
+   ===================================================== */
+.bg-sand {
+  background: linear-gradient(
+    90deg,
+    #F7F1E6 0%,
+    #E6DAC5 100%
+  );
+}
+
+/* =====================================================
+   PREMIUM — DEEP RED WARMED WITH GOLD
+   The one dark ground that carries a visible gold cast, for
+   feature bands that need more presence than .bg-deep.
+   ===================================================== */
+.bg-premium {
+  background: linear-gradient(
+    135deg,
+    #3A0E16 0%,
+    #5C1826 22%,
+    #7A3A1E 50%,
+    #5C1826 78%,
+    #3A0E16 100%
+  );
+}
+
+/* =====================================================
+   MAIN BRAND GRADIENT
+   RED → YELLOW. The vibrant, high-contrast pairing the rest of the
+   dark grounds only hint at — used for feature bands that should
+   read as unmistakably "Maan" at a glance.
+   ===================================================== */
+.bg-brand {
+  background: linear-gradient(
+    135deg,
+    #3A0E16 0%,
+    #8C1622 30%,
+    #D6293B 58%,
+    #E88A00 82%,
+    #F5B400 100%
+  );
+}
+
+/* =====================================================
+   GRADIENT TEXT — for display figures on LIGHT grounds.
+   Stays dark end-to-end so the numerals keep their contrast.
+   ===================================================== */
+.gradient-text {
+  background: linear-gradient(
+    135deg,
+    #14100C 0%,
+    #2E251C 35%,
+    #4A3A26 65%,
+    #6B5220 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* =====================================================
+   BASE
+   ===================================================== */
 @layer base {
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
   }
+
   body {
-    background: var(--color-bone);
+    background: linear-gradient(
+      90deg,
+      #F7F1E6 0%,
+      #EDE3D3 50%,
+      #F7F1E6 100%
+    );
     color: var(--color-ink);
     font-family: var(--font-sans);
     font-feature-settings: "ss01", "cv11";
+    min-height: 100vh;
   }
-  h1, h2, h3, h4 {
+
+  h1,
+  h2,
+  h3,
+  h4 {
     font-family: var(--font-display);
     font-weight: 500;
     letter-spacing: -0.02em;
-    line-height: 1.05;
+    line-height: 1.08;
   }
+
   ::selection {
     background: var(--color-ink);
     color: var(--color-bone);
   }
 
-  /* Every interactive element here has a :hover state; without this, keyboard
-     users get no equivalent. Offset so the ring clears image and dark fills. */
   :focus-visible {
     outline: 2px solid var(--color-accent);
     outline-offset: 3px;
-    border-radius: 1px;
+    border-radius: 2px;
   }
+
   .bg-ink :focus-visible,
   .text-bone :focus-visible {
     outline-color: var(--color-gold-soft);
   }
 
-  /* Backstop for anything animated in CSS rather than through framer-motion,
-     which is guarded per-component with useReducedMotion(). */
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -96,36 +306,78 @@
   }
 }
 
+/* =====================================================
+   TOKEN DIRECT UTILITY HELPERS
+   ===================================================== */
+.text-ink { color: var(--color-ink); }
+.text-deep { color: var(--color-deep); }
+.text-deep-raised { color: var(--color-deep-raised); }
+.text-bone { color: var(--color-bone); }
+.text-paper { color: var(--color-paper); }
+.text-mute { color: var(--color-mute); }
+.text-mute-dark { color: var(--color-mute-dark); }
+.text-mute-legible { color: var(--color-mute-legible); }
+.text-line { color: var(--color-line); }
+.text-line-dark { color: var(--color-line-dark); }
+.text-accent { color: var(--color-accent); }
+.text-red { color: var(--color-red); }
+.text-sand { color: var(--color-sand); }
+.text-gold { color: var(--color-gold); }
+.text-gold-soft { color: var(--color-gold-soft); }
+
+.bg-ink { background-color: var(--color-ink); }
+.bg-deep-solid { background-color: var(--color-deep); }
+.bg-bone { background-color: var(--color-bone); }
+.bg-paper-solid { background-color: var(--color-paper); }
+.bg-sand-solid { background-color: var(--color-sand); }
+.bg-red-solid { background-color: var(--color-red); }
+.bg-red-tint { background-color: var(--color-red-tint); }
+
+.border-line { border-color: var(--color-line); }
+.border-line-dark { border-color: var(--color-line-dark); }
+.border-deep { border-color: var(--color-deep); }
+.border-accent { border-color: var(--color-accent); }
+.border-red { border-color: var(--color-red); }
+
+/* =====================================================
+   OTHER UTILITIES
+   ===================================================== */
 @utility container-x {
   width: 100%;
   max-width: 1440px;
   margin-inline: auto;
   padding-inline: 1.25rem;
-  @media (min-width: 768px) { padding-inline: 2rem; }
-  @media (min-width: 1280px) { padding-inline: 3rem; }
+  @media (min-width: 720px) {
+    padding-inline: 2rem;
+  }
 }
 
 @utility section-y {
   padding-block: 4rem;
-  @media (min-width: 768px) { padding-block: 6rem; }
-  @media (min-width: 1024px) { padding-block: 8rem; }
+  @media (min-width: 768px) {
+    padding-block: 6rem;
+  }
+  @media (min-width: 1024px) {
+    padding-block: 7.5rem;
+  }
 }
 
 @utility hairline {
   border-top: 1px solid var(--color-line);
 }
 
-/* hide scrollbar on horizontal snap rows */
-.no-scrollbar::-webkit-scrollbar { display: none; }
-.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+@utility hairline-dark {
+  border-top: 1px solid var(--color-line-dark);
+}
 
-/* Nav links: the underline wipes in from the left and back out to the right,
-   rather than the bare colour swap this had before. Keyboard focus gets the
-   same affordance as hover. */
+/* =====================================================
+   NAVIGATION
+   ===================================================== */
 .nav-link {
   position: relative;
   transition: color 300ms var(--ease-premium);
 }
+
 .nav-link::after {
   content: "";
   position: absolute;
@@ -138,11 +390,28 @@
   transform-origin: right;
   transition: transform 400ms var(--ease-premium);
 }
+
 .nav-link:hover::after,
-.nav-link:focus-visible::after {
+.nav-link:focus-visible::after,
+.nav-link.is-active::after {
   transform: scaleX(1);
   transform-origin: left;
 }
+
 @media (prefers-reduced-motion: reduce) {
-  .nav-link::after { transition: none; }
+  .nav-link::after {
+    transition: none;
+  }
+}
+
+/* =====================================================
+   SCROLLBAR
+   ===================================================== */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
